@@ -33,6 +33,7 @@ export declare class ModelRestApi {
     getAll(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void;
     count(): (req: Request, res: Response, next: NextFunction) => void;
     create(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void;
+    createBulk(): (req: Request, res: Response, next: NextFunction) => void;
     updateById(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void;
     deleteById(): (req: Request, res: Response, next: NextFunction) => void;
     private formatIncludeStr;
