@@ -54,11 +54,11 @@ export class ModelRestApi {
         return (req: Request, res: Response): void | Response => {
             debug(`getById() with params:${JSON.stringify(req.params)} query:${JSON.stringify(req.query || {})}`);
 
-            let where = req.query && req.query.where ? JSON.parse(req.query.where) : {};
+            let where = req.query && req.query.where ? JSON.parse(req.query.where as string) : {};
 
             // Include
             let includeFnResult = this.formatIncludeStr(
-                req.query && req.query.include ? JSON.parse(req.query.include) : [],
+                req.query && req.query.include ? JSON.parse(req.query.include as string) : [],
             );
 
             if (includeFnResult.error) {
@@ -71,7 +71,7 @@ export class ModelRestApi {
                 include: includeFnResult.formattedInclude,
             };
 
-            if (req.query.attributes) filter.attributes = JSON.parse(req.query.attributes);
+            if (req.query.attributes) filter.attributes = JSON.parse(req.query.attributes as string);
 
             if (attributesExclude) {
                 let attributes: FindAttributeOptions;
@@ -110,11 +110,11 @@ export class ModelRestApi {
     public getAll(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void {
         return (req: Request, res: Response): Response => {
             debug(`getAll() with query:${JSON.stringify(req.query || {})}`);
-            let where = req.query && req.query.where ? JSON.parse(req.query.where) : {};
+            let where = req.query && req.query.where ? JSON.parse(req.query.where as string) : {};
 
             // Include
             let includeFnResult = this.formatIncludeStr(
-                req.query && req.query.include ? JSON.parse(req.query.include) : [],
+                req.query && req.query.include ? JSON.parse(req.query.include as string) : [],
             );
 
             if (includeFnResult.error) {
@@ -123,7 +123,9 @@ export class ModelRestApi {
             }
 
             // Order
-            let orderFnResult = this.formatOrderStr(req.query && req.query.order ? JSON.parse(req.query.order) : []);
+            let orderFnResult = this.formatOrderStr(
+                req.query && req.query.order ? JSON.parse(req.query.order as string) : [],
+            );
 
             if (orderFnResult.error) {
                 debug('getAll() order format error.');
@@ -132,13 +134,16 @@ export class ModelRestApi {
 
             let filter: FindOptions = {
                 where: where,
-                offset: req.query.offset && !isNaN(req.query.offset) ? parseInt(req.query.offset) : 0,
-                limit: req.query.limit && !isNaN(req.query.limit) ? parseInt(req.query.limit) : 1000 * 1000 * 1000,
+                offset: req.query.offset && !isNaN(req.query.offset as any) ? parseInt(req.query.offset as string) : 0,
+                limit:
+                    req.query.limit && !isNaN(req.query.limit as any)
+                        ? parseInt(req.query.limit as string)
+                        : 1000 * 1000 * 1000,
                 order: orderFnResult.result,
                 include: includeFnResult.formattedInclude,
             };
 
-            if (req.query.attributes) filter.attributes = JSON.parse(req.query.attributes);
+            if (req.query.attributes) filter.attributes = JSON.parse(req.query.attributes as string);
 
             if (attributesExclude) {
                 let attributes: FindAttributeOptions;
@@ -178,11 +183,12 @@ export class ModelRestApi {
     public count(): (req: Request, res: Response, next: NextFunction) => void {
         return (req: Request, res: Response): void => {
             debug(`count() with query:${JSON.stringify(req.query || {})}`);
-            let where = req.query && req.query.where ? JSON.parse(req.query.where) : {};
+            let where = req.query && req.query.where ? JSON.parse(req.query.where as string) : {};
             let filter: FindOptions = {
                 where: where,
-                include: this.formatIncludeStr(req.query && req.query.include ? JSON.parse(req.query.include) : [])
-                    .formattedInclude,
+                include: this.formatIncludeStr(
+                    req.query && req.query.include ? JSON.parse(req.query.include as string) : [],
+                ).formattedInclude,
             };
 
             this.model
@@ -214,6 +220,26 @@ export class ModelRestApi {
                         if (attributesExclude)
                             for (let i = 0; i < attributesExclude.length; i++) delete resObject[attributesExclude[i]];
                         return res.json(resObject);
+                    },
+                )
+                .catch(
+                    (err: Error): Response => {
+                        debug(`create() error. Err:${JSON.stringify(err.stack)}`);
+                        return res.status(400).send({ name: err.name, message: err.message });
+                    },
+                );
+        };
+    }
+
+    public createBulk(): (req: Request, res: Response, next: NextFunction) => void {
+        return (req: Request, res: Response): void => {
+            debug(`create() with body:${JSON.stringify(req.body || {})}`);
+            this.model
+                .bulkCreate(req.body, { validate: true })
+                .then(
+                    (result): Response => {
+                        debug(`create() result:${JSON.stringify(result)}`);
+                        return res.json('OK');
                     },
                 )
                 .catch(
