@@ -323,12 +323,13 @@ export class ModelRestApi {
             debug(`formatIncludeStr() formatting include item. includeStr[i]:${JSON.stringify(includeArray[i])}`);
             let includeItem: Includeable = {
                 model: this.sequelizeModelList[includeArray[i].model],
-                as: includeArray[i].as ? includeArray[i].as : includeArray[i].model,
+                as: includeArray[i].as,
                 attributes: includeArray[i].attributes ? includeArray[i].attributes : undefined,
                 where: includeArray[i].where ? includeArray[i].where : undefined,
             };
 
             if (!includeArray[i].attributes) delete includeItem.attributes;
+            if (!includeArray[i].as) delete includeItem.as;
 
             if (includeArray[i].include) {
                 let result = this.formatIncludeStr(includeArray[i].include);
