@@ -1,6 +1,6 @@
 {
   "name": "sx-sequelize-api",
-  "version": "1.5.0",
+  "version": "1.6.0",
   "description": "Sequelize Rest Api Helper",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
