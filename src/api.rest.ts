@@ -25,6 +25,7 @@
 import { Request, Response, NextFunction } from 'express';
 import { Model, FindOptions, Includeable, FindAttributeOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
+import { createApiError, commonErrors } from 'sx-api-error';
 import * as Debug from 'debug';
 import { WhereOptions } from 'sequelize';
 const debug = Debug('api.rest');
@@ -51,7 +52,7 @@ export class ModelRestApi {
     }
 
     public getById(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): void | Response => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug(`getById() with params:${JSON.stringify(req.params)} query:${JSON.stringify(req.query || {})}`);
 
             let where = req.query && req.query.where ? JSON.parse(req.query.where as string) : {};
@@ -63,7 +64,7 @@ export class ModelRestApi {
 
             if (includeFnResult.error) {
                 debug('getById() include format error.');
-                return res.status(400).send({ name: 'WRONG_FORMAT', message: 'Include Format Error' });
+                return next(createApiError(commonErrors.EWRONG_FORMAT, 'Include Format Error'));
             }
 
             let filter: FindOptions = {
@@ -98,17 +99,15 @@ export class ModelRestApi {
                         return res.json(result);
                     },
                 )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`getById() error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                .catch((err): void => {
+                    debug(`getById() error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
     public getAll(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): Response => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug(`getAll() with query:${JSON.stringify(req.query || {})}`);
             let where = req.query && req.query.where ? JSON.parse(req.query.where as string) : {};
 
@@ -119,7 +118,7 @@ export class ModelRestApi {
 
             if (includeFnResult.error) {
                 debug('getAll() include format error.');
-                return res.status(400).send({ name: 'WRONG_FORMAT', message: 'Include Format Error' });
+                return next(createApiError(commonErrors.EWRONG_FORMAT, 'Include Format Error'));
             }
 
             // Order
@@ -129,7 +128,7 @@ export class ModelRestApi {
 
             if (orderFnResult.error) {
                 debug('getAll() order format error.');
-                return res.status(400).send({ name: 'WRONG_FORMAT', message: 'Order Format Error' });
+                return next(createApiError(commonErrors.EWRONG_FORMAT, 'Order Format Error'));
             }
 
             let filter: FindOptions = {
@@ -171,17 +170,15 @@ export class ModelRestApi {
                         return res.json(result);
                     },
                 )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`getAll() calling findAll() error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                .catch((err: Error): void => {
+                    debug(`getAll() calling findAll() error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
     public count(): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): void => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug(`count() with query:${JSON.stringify(req.query || {})}`);
             let where = req.query && req.query.where ? JSON.parse(req.query.where as string) : {};
             let filter: FindOptions = {
@@ -199,17 +196,15 @@ export class ModelRestApi {
                         return res.json(result);
                     },
                 )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`count() error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                .catch((err: Error): void => {
+                    debug(`count() error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
     public create(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): void => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug(`create() with body:${JSON.stringify(req.body || {})}`);
             this.model
                 .create(req.body)
@@ -222,17 +217,15 @@ export class ModelRestApi {
                         return res.json(resObject);
                     },
                 )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`create() error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                .catch((err: Error): void => {
+                    debug(`create() error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
     public createBulk(): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): void => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug(`create() with body:${JSON.stringify(req.body || {})}`);
             this.model
                 .bulkCreate(req.body, { validate: true })
@@ -242,58 +235,51 @@ export class ModelRestApi {
                         return res.json('OK');
                     },
                 )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`create() error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                .catch((err: Error): void => {
+                    debug(`create() error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
     public updateById(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): void => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug(`updateById() with params:${JSON.stringify(req.params)} body:${JSON.stringify(req.body || {})}`);
             this.model
                 .findByPk(req.params.id)
-                .then(
-                    (record): Response => {
-                        if (!record) {
-                            debug(`updateById() Could not find record.`);
-                            return res.send({ name: 'error', message: 'Record not found!' });
-                        }
+                .then((record): void => {
+                    if (!record) {
+                        debug(`updateById() Could not find record.`);
+                        return next(createApiError(commonErrors.ERECORD_NOT_FOUND));
+                    }
 
-                        record
-                            .update(req.body)
-                            .then(
-                                (result): Response => {
-                                    debug(`updateById() result:${JSON.stringify(result)}`);
-                                    let resObject = result.get();
-                                    if (attributesExclude)
-                                        for (let i = 0; i < attributesExclude.length; i++)
-                                            delete resObject[attributesExclude[i]];
-                                    return res.json(result.get());
-                                },
-                            )
-                            .catch(
-                                (err: Error): Response => {
-                                    debug(`updateById()  updateAttributes error. Err:${JSON.stringify(err.stack)}`);
-                                    return res.status(400).send({ name: err.name, message: err.message });
-                                },
-                            );
-                    },
-                )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`updateById() findById error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                    record
+                        .update(req.body)
+                        .then(
+                            (result): Response => {
+                                debug(`updateById() result:${JSON.stringify(result)}`);
+                                let resObject = result.get();
+                                if (attributesExclude)
+                                    for (let i = 0; i < attributesExclude.length; i++)
+                                        delete resObject[attributesExclude[i]];
+                                return res.json(result.get());
+                            },
+                        )
+                        .catch((err: Error): void => {
+                            debug(`updateById()  updateAttributes error. Err:${JSON.stringify(err.stack)}`);
+
+                            return next(err);
+                        });
+                })
+                .catch((err: Error): void => {
+                    debug(`updateById() findById error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
     public deleteById(): (req: Request, res: Response, next: NextFunction) => void {
-        return (req: Request, res: Response): void => {
+        return (req: Request, res: Response, next: NextFunction): void => {
             debug('deleteById() with params:${JSON.stringify(req.params)}');
             this.model
                 .destroy({ where: { id: req.params.id } })
@@ -303,12 +289,10 @@ export class ModelRestApi {
                         return res.json(result);
                     },
                 )
-                .catch(
-                    (err: Error): Response => {
-                        debug(`deleteById() error. Err:${JSON.stringify(err.stack)}`);
-                        return res.status(400).send({ name: err.name, message: err.message });
-                    },
-                );
+                .catch((err: Error): void => {
+                    debug(`deleteById() error. Err:${JSON.stringify(err.stack)}`);
+                    return next(err);
+                });
         };
     }
 
