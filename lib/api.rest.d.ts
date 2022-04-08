@@ -21,14 +21,12 @@
 
  */
 import { Request, Response, NextFunction } from 'express';
-import { Model } from 'sequelize';
+import { ModelStatic, Model } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
-export declare class ExModel extends Model {
-}
 export declare class ModelRestApi {
     private model;
     private sequelizeModelList;
-    constructor(model: typeof ExModel, connection: Sequelize);
+    constructor(model: ModelStatic<Model>, connection: Sequelize);
     getById(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void;
     getAll(attributesExclude?: string[]): (req: Request, res: Response, next: NextFunction) => void;
     count(): (req: Request, res: Response, next: NextFunction) => void;

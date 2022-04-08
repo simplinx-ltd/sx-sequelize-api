@@ -23,14 +23,14 @@
  */
 
 import { Request, Response, NextFunction } from 'express';
-import { Model, FindOptions, Includeable, FindAttributeOptions } from 'sequelize';
+import { ModelStatic, Model, FindOptions, Includeable, FindAttributeOptions } from 'sequelize';
 import { Sequelize } from 'sequelize-typescript';
 import { createApiError, commonErrors } from 'sx-api-error';
 import * as Debug from 'debug';
 import { WhereOptions } from 'sequelize';
 const debug = Debug('api.rest');
 
-export class ExModel extends Model {}
+// export class ExModel extends Model {}
 
 interface IncludeArray {
     model: string;
@@ -41,12 +41,12 @@ interface IncludeArray {
 }
 
 export class ModelRestApi {
-    private model: typeof ExModel = null;
+    private model: ModelStatic<Model> = null;
     private sequelizeModelList: {
-        [key: string]: typeof Model;
+        [key: string]: ModelStatic<Model>;
     } = null;
 
-    public constructor(model: typeof ExModel, connection: Sequelize) {
+    public constructor(model: ModelStatic<Model>, connection: Sequelize) {
         this.model = model;
         this.sequelizeModelList = connection.models;
     }
@@ -165,7 +165,7 @@ export class ModelRestApi {
             this.model
                 .findAll(filter)
                 .then(
-                    (result: ExModel[]): Response => {
+                    (result: Model[]): Response => {
                         debug(`getAll() calling findAll() returned ${result.length} items`);
                         return res.json(result);
                     },

@@ -2,12 +2,14 @@
     "compilerOptions": {
         "experimentalDecorators": true,
         "outDir": "./lib",
-        "target": "es2015",
+        "target": "es6",
         "module": "commonjs",
-        "declaration": true
+        "declaration": true,
+        "emitDecoratorMetadata": true
     },
     "include": [
-        "./src/**/*.ts"
+        "./src/**/*.ts",
+        ".test/**/*.ts"
     ],
     "exclude": [
         "node_modules",
