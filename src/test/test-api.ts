@@ -1,5 +1,5 @@
 import * as express from 'express';
-import { ModelRestApi } from '../lib';
+import { ModelRestApi } from '../';
 import { Sequelize } from 'sequelize-typescript';
 
 import TestModel from './test-model';
